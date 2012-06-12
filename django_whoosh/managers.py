@@ -39,7 +39,6 @@ field_mapping = {
     models.TextField: TEXT,
     models.TimeField: ID,
     models.URLField: ID,
-    models.XMLField: TEXT,
 }
 
 class WhooshManager(models.Manager):
@@ -83,6 +82,9 @@ class WhooshManager(models.Manager):
         else:
             writer.update_document(**dct)
         writer.commit()
+        self.index = self.index.refresh()
+        self.searcher = self.index.searcher()
+        
     
     def post_delete_callback(self, sender, instance, **kwargs):
         pass
@@ -90,5 +92,5 @@ class WhooshManager(models.Manager):
     def query(self, q):
         if self.parser is None:
             self.parser = QueryParser(self.default, schema=self.schema)
-        results = self.searcher.search(self.parser.parse(q))
+        results = self.searcher.search(self.parser.parse(q+"*"))
         return self.filter(id__in=[r['id'] for r in results])
